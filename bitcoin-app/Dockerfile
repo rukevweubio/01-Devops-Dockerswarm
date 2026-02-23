@@ -1,11 +1,8 @@
 # --- Build Stage ---
 FROM node:18-alpine AS build
-
 WORKDIR /app
-
 COPY package*.json ./
 RUN npm ci
-
 COPY . .
 RUN npm run build
 
@@ -16,24 +13,22 @@ FROM nginx:alpine-slim
 WORKDIR /usr/share/nginx/html
 COPY --from=build /app/dist .
 
-# Copy the config (Ensure you updated nginx.conf to "listen 8080;")
+# Copy your custom config (Ensure it has "listen 8080;")
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# OpenShift specific permission fixes:
-# 1. We use GID 0 (root group) because OpenShift assigns a random UID in this group.
-# 2. We make sure Nginx can write its PID and cache files.
+# 1. Fix permissions for the directories Nginx needs to touch.
+# 2. We grant permissions to GID 0 (root group) because that's what OpenShift uses.
 RUN chmod -R 775 /var/cache/nginx /var/run /var/log/nginx /usr/share/nginx/html && \
-    chgrp -R 0 /var/cache/nginx /var/run /var/log/nginx /usr/share/nginx/html && \
-    chmod -R g=u /etc/passwd
+    chgrp -R 0 /var/cache/nginx /var/run /var/log/nginx /usr/share/nginx/html
 
-# Optional: Tell Nginx to put its PID file in a writable directory
-# Some Nginx versions try to write to /var/run/nginx.pid which may fail
-RUN sed -i '1s/^/pid \/tmp\/nginx.pid;\n/' /etc/nginx/nginx.conf
+# 3. Wipe the default 'user' directive from the main nginx.conf 
+# This stops the "user directive makes sense only if master runs with super-user" warning.
+RUN sed -i 's/^user/#user/' /etc/nginx/nginx.conf
 
-# OpenShift runs as a random UID, but 1001 is a good local testing placeholder
+# OpenShift runs as a random UID
 USER 1001
 
-# Switch to a non-privileged port
+# Non-privileged port
 EXPOSE 8080
 
 CMD ["nginx", "-g", "daemon off;"]
