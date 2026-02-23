@@ -17,7 +17,7 @@ RUN npm run build
 
 
 FROM nginx:alpine-slim 
-)
+
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 
