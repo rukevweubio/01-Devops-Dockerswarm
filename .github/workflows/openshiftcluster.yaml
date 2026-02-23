@@ -26,7 +26,7 @@ jobs:
       with:
         node-version: 18
 
-   p
+   
     - name: Install & Build App
       working-directory: bitcoin-app
       run: |
