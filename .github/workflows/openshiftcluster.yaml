@@ -32,7 +32,7 @@ jobs:
         npm ci
         npm run build
 
-   e
+  
     - name: Build Docker Image
       working-directory: bitcoin-app
       run: |
