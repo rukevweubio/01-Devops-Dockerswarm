@@ -30,7 +30,7 @@ RUN mkdir -p /var/cache/nginx/client_temp /var/run/nginx \
     && chmod -R 777 /var/cache/nginx /var/run/nginx \
     && chmod -R 755 /usr/share/nginx/html /etc/nginx/conf.d
 
-)
+
 USER 1001
 
 EXPOSE 80
