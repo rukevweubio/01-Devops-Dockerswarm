@@ -1,4 +1,4 @@
-name: Build and Deploy to OpenShift DEPLOY
+name: Build and Deploy to OpenShift
 
 on:
   push:
@@ -82,7 +82,7 @@ jobs:
         
         # 3. Patch the Service to route external port 80 to internal port 8080
         # This prevents the 'Connection Refused' error.
-        oc patch svc/$OPENSHIFT_DEPLOY_NAME -p '{"spec":{"ports":[{"port":8080,"targetPort":8080,"protocol":"TCP","name":"8080-tcp"}]}}'
+        oc patch svc/$OPENSHIFT_DEPLOY_NAME -p '{"spec":{"ports":[{"port":80,"targetPort":8080,"protocol":"TCP","name":"80-tcp"}]}}'
         
         # 4. Monitor the rollout
         oc rollout status deployment/$OPENSHIFT_DEPLOY_NAME
