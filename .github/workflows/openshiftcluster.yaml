@@ -10,7 +10,6 @@ env:
   IMAGE_NAME: mybitcoin-app
   DOCKERHUB_USER: rukevweubio
   QUAY_USER: rukevweubio
-  # Ensure this matches your actual deployment name in OpenShift
   OPENSHIFT_DEPLOY_NAME: bitcoin-app 
 
 jobs:
@@ -18,71 +17,63 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Setup Node
-      uses: actions/setup-node@v4
-      with:
-        node-version: 18
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
 
-    - name: Install & Build App
-      working-directory: bitcoin-app
-      run: |
-        npm ci
-        npm run build
+      - name: Install & Build App
+        working-directory: bitcoin-app
+        run: |
+          npm ci
+          npm run build
 
-    - name: Build Docker Image
-      working-directory: bitcoin-app
-      run: |
-        docker build -t $IMAGE_NAME:latest .
+      - name: Build Docker Image
+        working-directory: bitcoin-app
+        run: |
+          docker build -t $IMAGE_NAME:latest .
 
-    - name: Login to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Login to Quay.io
-      uses: docker/login-action@v3
-      with:
-        registry: quay.io
-        username: ${{ secrets.QUAY_USERNAME }}
-        password: ${{ secrets.QUAY_TOKEN }}
+      - name: Login to Quay.io
+        uses: docker/login-action@v3
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_TOKEN }}
 
-    - name: Tag and Push Images
-      run: |
-        docker tag $IMAGE_NAME:latest $DOCKERHUB_USER/$IMAGE_NAME:latest
-        docker tag $IMAGE_NAME:latest quay.io/$QUAY_USER/$IMAGE_NAME:latest
-        docker push $DOCKERHUB_USER/$IMAGE_NAME:latest
-        docker push quay.io/$QUAY_USER/$IMAGE_NAME:latest
+      - name: Tag and Push Images
+        run: |
+          docker tag $IMAGE_NAME:latest $DOCKERHUB_USER/$IMAGE_NAME:latest
+          docker tag $IMAGE_NAME:latest quay.io/$QUAY_USER/$IMAGE_NAME:latest
+          docker push $DOCKERHUB_USER/$IMAGE_NAME:latest
+          docker push quay.io/$QUAY_USER/$IMAGE_NAME:latest
 
-    - name: Install OpenShift CLI
-      run: |
-        curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz
-        tar -xvf oc.tar.gz
-        sudo mv oc /usr/local/bin/
+      - name: Install OpenShift CLI
+        run: |
+          curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz
+          tar -xvf oc.tar.gz
+          sudo mv oc /usr/local/bin/
 
-    - name: OpenShift Login
-      run: |
-        oc login ${{ secrets.OPENSHIFT_API }} \
-          --token=${{ secrets.OPENSHIFT_TOKEN }} \
-          --insecure-skip-tls-verify=true
+      - name: OpenShift Login
+        run: |
+          oc login ${{ secrets.OPENSHIFT_API }} \
+            --token=${{ secrets.OPENSHIFT_TOKEN }} \
+            --insecure-skip-tls-verify=true
 
-    - name: Select Project
-      run: oc project ${{ secrets.OPENSHIFT_NAMESPACE }}
+      - name: Select Project
+        run: oc project ${{ secrets.OPENSHIFT_NAMESPACE }}
 
-    - name: Deploy and Patch Port
-      run: |
-        # 1. Update the image
-        oc set image deployment/$OPENSHIFT_DEPLOY_NAME $OPENSHIFT_DEPLOY_NAME=quay.io/$QUAY_USER/$IMAGE_NAME:latest
-        
-        # 2. Patch the Container Port to 8080 (Matches your new Dockerfile/Nginx config)
-        oc patch deployment/$OPENSHIFT_DEPLOY_NAME --type=json -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/ports/0/containerPort", "value": 8080}]'
-        
-        # 3. Patch the Service to route external port 80 to internal port 8080
-        # This prevents the 'Connection Refused' error.
-        oc patch svc/$OPENSHIFT_DEPLOY_NAME -p '{"spec":{"ports":[{"port":80,"targetPort":8080,"protocol":"TCP","name":"8080-tcp"}]}}'
-        
-        # 4. Monitor the rollout
-        oc rollout status deployment/$OPENSHIFT_DEPLOY_NAME
+      - name: Deploy and Patch Port
+        run: |
+          oc set image deployment/$OPENSHIFT_DEPLOY_NAME $OPENSHIFT_DEPLOY_NAME=quay.io/$QUAY_USER/$IMAGE_NAME:latest
+          oc patch deployment/$OPENSHIFT_DEPLOY_NAME --type=json -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/ports/0/containerPort", "value": 8080}]'
+          oc patch svc/$OPENSHIFT_DEPLOY_NAME -p '{"spec":{"ports":[{"port":8080,"targetPort":8080,"protocol":"TCP","name":"8080-tcp"}]}}'
+          oc rollout status deployment/$OPENSHIFT_DEPLOY_NAME
