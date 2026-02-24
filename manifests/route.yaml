@@ -1,0 +1,12 @@
+
+
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: my-swarm-demo
+spec:
+  to:
+    kind: Service
+    name: my-swarm-demo
+  port:
+    targetPort: 80

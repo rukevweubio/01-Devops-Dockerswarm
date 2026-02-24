@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-swarm-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-swarm-demo
+  template:
+    metadata:
+      labels:
+        app: my-swarm-demo
+    spec:
+      containers:
+      - name: my-swarm-demo
+        # This matches the ImageStream name we created above
+        image: my-swarm-demo:latest
+        ports:
+        - containerPort: 80

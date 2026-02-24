@@ -1,0 +1,12 @@
+# service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-swarm-demo
+spec:
+  selector:
+    app: my-swarm-demo
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80

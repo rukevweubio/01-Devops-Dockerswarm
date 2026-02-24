@@ -1,0 +1,20 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: my-swarm-demo
+spec:
+  source:
+    type: Git
+    git:
+      uri: https://github.com/rukevweubio/01-Devops-Dockerswarm.git
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: bitcoin-app/Dockerfile
+  output:
+    to:
+      kind: ImageStreamTag
+      name: my-swarm-demo:latest
+  triggers:
+    - type: ConfigChange
+    - type: ImageChange
