@@ -7,14 +7,12 @@ spec:
     type: Git
     git:
       uri: https://github.com/rukevweubio/01-Devops-Dockerswarm.git
+    contextDir: bitcoin-app 
   strategy:
     type: Docker
     dockerStrategy:
-      dockerfilePath: bitcoin-app/Dockerfile
+      dockerfilePath: Dockerfile
   output:
     to:
       kind: ImageStreamTag
       name: my-swarm-demo:latest
-  triggers:
-    - type: ConfigChange
-    - type: ImageChange
