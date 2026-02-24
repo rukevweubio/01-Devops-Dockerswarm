@@ -9,6 +9,7 @@ env:
   IMAGE_NAME: bitcoin-app
   DOCKER_USERNAME: rukevweubio
   QUAY_USER: ubiowororuki
+  OPENSHIFT_NAMESPACE : ubiowororuki-dev
   OPENSHIFT_DEPLOY_NAME: bitcoin-app 
 
 jobs:
@@ -81,7 +82,7 @@ jobs:
             --insecure-skip-tls-verify=true
 
       - name: Select Project
-        run: oc project "${{ secrets.OPENSHIFT_NAMESPACE }}"
+        run: oc project "${{ env.OPENSHIFT_NAMESPACE }}"
 
       - name: Deploy and Patch Port
         run: |
