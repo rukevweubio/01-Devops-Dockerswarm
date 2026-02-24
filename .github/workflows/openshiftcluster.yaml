@@ -1,36 +1,43 @@
-name: Build and Deploy to OpenShift deploy defaults
-  
+name: Build and Deploy to OpenShift
 
 on:
   push:
-    branches: 
-     - main 
-   
+    branches:
+      - main
 
 env:
   IMAGE_NAME: mybitcoin-app
   DOCKERHUB_USER: rukevweubio
-  QUAY_USER: rukevweubio
-  OPENSHIFT_DEPLOY_NAME: bitcoin-app 
+  QUAY_USER: ubiowororuki
+  OPENSHIFT_DEPLOY_NAME: bitcoin-app
 
 jobs:
 
   lint-workflow:
+    name: Lint Workflow
     runs-on: ubuntu-latest
     steps:
-       - name: Checkout repository
-         uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-       - name: actionlint the repo 
-         uses: reviewdog/action-actionlint@v1
+      - name: Run actionlint
+        uses: reviewdog/action-actionlint@v1
+        with:
+          fail_on_error: true
 
-  build:
+  build-and-deploy:
+    name: Build and Deploy
     runs-on: ubuntu-latest
     needs: lint-workflow
-    steps:
-      - uses: actions/checkout@v4
-      - run: echo "Build starts only if lint passes"
 
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build starts only if lint passes
+        run: echo "Lint passed — starting build"
+
+      # Node setup (remove if app is not NodeJS)
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -45,14 +52,16 @@ jobs:
       - name: Build Docker Image
         working-directory: bitcoin-app
         run: |
-          docker build -t $IMAGE_NAME:v1.00 .
+          docker build -t "$IMAGE_NAME:v1.00" .
 
+      # ✅ Docker Hub login
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      # ✅ Quay login
       - name: Login to Quay.io
         uses: docker/login-action@v3
         with:
@@ -62,29 +71,38 @@ jobs:
 
       - name: Tag and Push Images
         run: |
-          docker tag "$IMAGE_NAME:v1.00" $DOCKERHUB_USER/$IMAGE_NAME:latest
-          docker tag "$IMAGE_NAME:v1.00" quay.io/$QUAY_USER/$IMAGE_NAME:latest
+          docker tag "$IMAGE_NAME:v1.00" "$DOCKERHUB_USER/$IMAGE_NAME:latest"
+          docker tag "$IMAGE_NAME:v1.00" "quay.io/$QUAY_USER/$IMAGE_NAME:latest"
+
           docker push "$DOCKERHUB_USER/$IMAGE_NAME:latest"
-          docker push quay.io/$QUAY_USER/$IMAGE_NAME:latest
+          docker push "quay.io/$QUAY_USER/$IMAGE_NAME:latest"
 
       - name: Install OpenShift CLI
         run: |
           curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz
           tar -xvf oc.tar.gz
           sudo mv oc /usr/local/bin/
+          oc version
 
       - name: OpenShift Login
         run: |
-          oc login ${{ secrets.OPENSHIFT_API }} \
-            --token=${{ secrets.OPENSHIFT_TOKEN }} \
+          oc login "${{ secrets.OPENSHIFT_API }}" \
+            --token="${{ secrets.OPENSHIFT_TOKEN }}" \
             --insecure-skip-tls-verify=true
 
       - name: Select Project
-        run: oc project ${{ secrets.OPENSHIFT_NAMESPACE }}
+        run: oc project "${{ secrets.OPENSHIFT_NAMESPACE }}"
 
-      - name: Deploy and Patch Port
+      - name: Deploy Image to OpenShift
         run: |
-          oc set image deployment/$OPENSHIFT_DEPLOY_NAME $OPENSHIFT_DEPLOY_NAME=quay.io/$QUAY_USER/$IMAGE_NAME:latest
-          oc patch deployment/$OPENSHIFT_DEPLOY_NAME --type=json -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/ports/0/containerPort", "value": 8080}]'
-          oc patch svc/$OPENSHIFT_DEPLOY_NAME -p '{"spec":{"ports":[{"port":8080,"targetPort":8080,"protocol":"TCP","name":"8080-tcp"}]}}'
-          oc rollout status deployment/$OPENSHIFT_DEPLOY_NAME
+          oc set image deployment/"$OPENSHIFT_DEPLOY_NAME" \
+          "$OPENSHIFT_DEPLOY_NAME"="quay.io/$QUAY_USER/$IMAGE_NAME:latest"
+
+      - name: Ensure Service Port (optional safety)
+        run: |
+          oc patch svc/"$OPENSHIFT_DEPLOY_NAME" \
+          -p '{"spec":{"ports":[{"port":8080,"targetPort":8080,"protocol":"TCP","name":"8080-tcp"}]}}' || true
+
+      - name: Wait for rollout
+        run: |
+          oc rollout status deployment/"$OPENSHIFT_DEPLOY_NAME"
