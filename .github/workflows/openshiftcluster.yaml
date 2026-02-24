@@ -1,4 +1,4 @@
-name: Build and Deploy to OpenShift deploy defaults:
+name: Build and Deploy to OpenShift deploy defaults
   
 
 on:
