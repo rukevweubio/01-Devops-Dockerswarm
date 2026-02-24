@@ -89,5 +89,4 @@ jobs:
           oc set image deployment/"$OPENSHIFT_DEPLOY_NAME" "$OPENSHIFT_DEPLOY_NAME"="quay.io/$QUAY_USER/$IMAGE_NAME:latest"
           oc patch deployment/"$OPENSHIFT_DEPLOY_NAME" --type=json -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/ports/0/containerPort", "value": 8080}]'
           oc patch svc/"$OPENSHIFT_DEPLOY_NAME" -p '{"spec":{"ports":[{"port":8080,"targetPort":8080,"protocol":"TCP","name":"8080-tcp"}]}}'
-          oc rollout status deployment/"$OPENSHIFT_DEPLOY_NAME"
           oc scale  deployment/"$OPENSHIFT_DEPLOY_NAME" --replicas=3
