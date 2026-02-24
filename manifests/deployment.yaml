@@ -14,7 +14,6 @@ spec:
     spec:
       containers:
       - name: my-swarm-demo
-        # This matches the ImageStream name we created above
-        image: my-swarm-demo:latest
+        image: image-registry.openshift-image-registry.svc:5000/ubiowororuki-dev/my-swarm-demo:latest
         ports:
         - containerPort: 80
