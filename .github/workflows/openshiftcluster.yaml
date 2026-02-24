@@ -3,7 +3,8 @@ name: Build and Deploy to OpenShift deploy defaults
 
 on:
   push:
-    branches: [ main ]
+    branches: 
+     - main 
     paths:
       - "bitcoin-app/**"
 
@@ -14,12 +15,18 @@ env:
   OPENSHIFT_DEPLOY_NAME: bitcoin-app 
 
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
 
+  lint-workflow:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: reviewdog/action-actionlint@v1
+
+  build:
+    runs-on: ubuntu-latest
+    needs: lint-workflow
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Build starts only if lint passes"
 
       - name: Setup Node
         uses: actions/setup-node@v4
