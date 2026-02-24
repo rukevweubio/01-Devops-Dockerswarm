@@ -18,7 +18,11 @@ jobs:
   lint-workflow:
     runs-on: ubuntu-latest
     steps:
-      - uses: reviewdog/action-actionlint@v1
+       - name: Checkout repository
+         uses: actions/checkout@v4
+
+       - name: actionlint the repo 
+         uses: reviewdog/action-actionlint@v1
 
   build:
     runs-on: ubuntu-latest
