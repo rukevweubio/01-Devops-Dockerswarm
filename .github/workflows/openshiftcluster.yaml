@@ -7,7 +7,7 @@ on:
 
 env:
   IMAGE_NAME: bitcoin-app
-  DOCKERHUB_USER: rukevweubio
+  DOCKER_USERNAME: rukevweubio
   QUAY_USER: ubiowororuki
   OPENSHIFT_DEPLOY_NAME: bitcoin-app 
 
@@ -59,9 +59,9 @@ jobs:
 
       - name: Tag and Push Images
         run: |
-          docker tag "$IMAGE_NAME:v1.00" "$DOCKERHUB_USER/$IMAGE_NAME:latest"
+          docker tag "$IMAGE_NAME:v1.00" "$DOCKER_USERNAME/$IMAGE_NAME:latest"
           docker tag "$IMAGE_NAME:v1.00" "quay.io/$QUAY_USER/$IMAGE_NAME:latest"
-          docker push "$DOCKERHUB_USER/$IMAGE_NAME:latest"
+          docker push "$DOCKER_USERNAME/$IMAGE_NAME:latest"
           docker push "quay.io/$QUAY_USER/$IMAGE_NAME:latest"
 
   deploy-openshift:
