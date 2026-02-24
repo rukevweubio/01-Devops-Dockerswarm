@@ -54,7 +54,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: quay.io
-          username: ${{ env.QUAY_USER }}
+          username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_TOKEN }}
 
       - name: Tag and Push Images
