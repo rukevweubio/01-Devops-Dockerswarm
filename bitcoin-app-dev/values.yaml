@@ -1,0 +1,26 @@
+
+replicaCount: 3
+
+
+image:
+  repository: quay.io/ubiowororuki/bitcoin-app
+  tag: latest
+  pullPolicy: IfNotPresent
+
+
+service:
+  type: ClusterIP
+  port: 8080
+
+
+serviceAccount:
+  
+  name: bitcoin-app-sa
+  
+  create: false
+
+hpa:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70

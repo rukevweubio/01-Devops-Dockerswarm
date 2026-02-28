@@ -1,0 +1,69 @@
+name: Build and Deploy to OpenShift with Helm
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE_NAME: bitcoin-app
+  QUAY_USER: ubiowororuki
+  OPENSHIFT_NAMESPACE: ubiowororuki-dev
+  HELM_RELEASE_NAME: bitcoin-app
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Build App
+        run: |
+          npm ci
+          npm run build
+
+      - name: Login to Quay.io
+        uses: docker/login-action@v3
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_TOKEN }}
+
+      - name: Build & Push Docker Image
+        run: |
+          docker build -t quay.io/${{ env.QUAY_USER }}/$IMAGE_NAME:latest .
+          docker push quay.io/${{ env.QUAY_USER }}/$IMAGE_NAME:latest
+
+  deploy-helm:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Helm
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+      - name: Install OpenShift CLI
+        run: |
+          curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz
+          tar -xvf oc.tar.gz
+          sudo mv oc /usr/local/bin/
+
+      - name: Login to OpenShift
+        run: |
+          oc login ${{ secrets.OPENSHIFT_API }} --token=${{ secrets.OPENSHIFT_TOKEN }} --insecure-skip-tls-verify=true
+          oc project ${{ env.OPENSHIFT_NAMESPACE }}
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install ${{ env.HELM_RELEASE_NAME }} ./bitcoin-app-dev \
+            --namespace ${{ env.OPENSHIFT_NAMESPACE }} \
+            --set image.repository=quay.io/${{ env.QUAY_USER }}/$IMAGE_NAME \
+            --set image.tag=latest \
+            --wait
