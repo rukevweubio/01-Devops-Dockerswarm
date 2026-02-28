@@ -1,16 +1,15 @@
-name: Build and Deploy to OpenShift deploy
+name: Build and Deploy to OpenShift
 
 on:
   push:
     branches: 
-      - main 
+      - main
 
 env:
   IMAGE_NAME: bitcoin-app
-  DOCKER_USERNAME: rukevweubio
   QUAY_USER: ubiowororuki
-  OPENSHIFT_NAMESPACE : ubiowororuki-dev
-  OPENSHIFT_DEPLOY_NAME: bitcoin-app 
+  OPENSHIFT_NAMESPACE: ubiowororuki-dev
+  OPENSHIFT_DEPLOY_NAME: bitcoin-app
 
 jobs:
 
@@ -29,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
@@ -40,17 +39,6 @@ jobs:
           npm ci
           npm run build
 
-      - name: Build Docker Image
-        working-directory: bitcoin-app
-        run: |
-          docker build -t "$IMAGE_NAME:v1.00" .
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
       - name: Login to Quay.io
         uses: docker/login-action@v3
         with:
@@ -58,12 +46,10 @@ jobs:
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_TOKEN }}
 
-      - name: Tag and Push Images
+      - name: Build and Push Docker Image to Quay.io
         run: |
-          docker tag "$IMAGE_NAME:v1.00" "$DOCKER_USERNAME/$IMAGE_NAME:latest"
-          docker tag "$IMAGE_NAME:v1.00" "quay.io/$QUAY_USER/$IMAGE_NAME:latest"
-          docker push "$DOCKER_USERNAME/$IMAGE_NAME:latest"
-          docker push "quay.io/$QUAY_USER/$IMAGE_NAME:latest"
+          docker build -t "quay.io/${{ env.QUAY_USER }}/$IMAGE_NAME:latest" ./bitcoin-app
+          docker push "quay.io/${{ env.QUAY_USER }}/$IMAGE_NAME:latest"
 
   deploy-openshift:
     runs-on: ubuntu-latest
@@ -75,18 +61,53 @@ jobs:
           tar -xvf oc.tar.gz
           sudo mv oc /usr/local/bin/
 
-      - name: OpenShift Login
+      - name: Login to OpenShift
         run: |
           oc login "${{ secrets.OPENSHIFT_API }}" \
             --token="${{ secrets.OPENSHIFT_TOKEN }}" \
             --insecure-skip-tls-verify=true
 
-      - name: Select Project
-        run: oc project "${{ env.OPENSHIFT_NAMESPACE }}"
+      - name: Set OpenShift Project
+        run: oc project ${{ env.OPENSHIFT_NAMESPACE }}
 
-      - name: Deploy and Patch Port
+      - name: Apply Deployment
         run: |
-          oc set image deployment/"$OPENSHIFT_DEPLOY_NAME" "$OPENSHIFT_DEPLOY_NAME"="quay.io/$QUAY_USER/$IMAGE_NAME:latest"
-          oc patch deployment/"$OPENSHIFT_DEPLOY_NAME" --type=json -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/ports/0/containerPort", "value": 8080}]'
-          oc patch svc/"$OPENSHIFT_DEPLOY_NAME" -p '{"spec":{"ports":[{"port":8080,"targetPort":8080,"protocol":"TCP","name":"8080-tcp"}]}}'
-          oc scale  deployment/"$OPENSHIFT_DEPLOY_NAME" --replicas=3
+          cat <<EOF > deployment.yaml
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: ${{ env.OPENSHIFT_DEPLOY_NAME }}
+          spec:
+            replicas: 3
+            selector:
+              matchLabels:
+                app: ${{ env.OPENSHIFT_DEPLOY_NAME }}
+            template:
+              metadata:
+                labels:
+                  app: ${{ env.OPENSHIFT_DEPLOY_NAME }}
+              spec:
+                containers:
+                  - name: ${{ env.OPENSHIFT_DEPLOY_NAME }}
+                    image: quay.io/${{ env.QUAY_USER }}/$IMAGE_NAME:latest
+                    ports:
+                      - containerPort: 8080
+          EOF
+          oc apply -f deployment.yaml
+
+      - name: Apply Service
+        run: |
+          cat <<EOF > service.yaml
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: ${{ env.OPENSHIFT_DEPLOY_NAME }}
+          spec:
+            selector:
+              app: ${{ env.OPENSHIFT_DEPLOY_NAME }}
+            ports:
+              - protocol: TCP
+                port: 8080
+                targetPort: 8080
+          EOF
+          oc apply -f service.yaml
