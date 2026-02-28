@@ -36,6 +36,7 @@ jobs:
           password: ${{ secrets.QUAY_TOKEN }}
 
       - name: Build & Push Docker Image
+        working-directory: bitcoin-app
         run: |
           docker build -t quay.io/${{ env.QUAY_USER }}/$IMAGE_NAME:latest .
           docker push quay.io/${{ env.QUAY_USER }}/$IMAGE_NAME:latest
