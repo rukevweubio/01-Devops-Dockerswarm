@@ -24,3 +24,15 @@ hpa:
   minReplicas: 2
   maxReplicas: 5
   targetCPUUtilizationPercentage: 70
+
+
+
+ingress:
+  enabled: false
+  annotations: {}
+  hosts:
+    - host: bitcoin-app.example.com
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
