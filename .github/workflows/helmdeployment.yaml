@@ -23,6 +23,7 @@ jobs:
           node-version: 18
 
       - name: Build App
+        working-directory: bitcoin-app
         run: |
           npm ci
           npm run build
