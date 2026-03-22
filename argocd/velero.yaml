@@ -1,7 +1,7 @@
 apiVersion: external-secrets.io/v1
 kind: SecretStore
 metadata:
-  name: vault-velero-frontend
+  name: vault-minio-backend
   namespace: velero
 spec:
   provider:
