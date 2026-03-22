@@ -1,0 +1,11 @@
+name: Test Minikube Runner
+on: workflow_dispatch 
+
+jobs:
+  check-minikube:
+    runs-on: arc-runner-set 
+    steps:
+      - name: Hello from Pod
+        run: |
+          echo "I am running in a transient pod on Minikube!"
+          uptime
