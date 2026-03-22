@@ -1,0 +1,7 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: arc-actions-runner-controller-selfsigned-issuer
+  namespace: arc-system
+spec:
+  selfSigned: {}

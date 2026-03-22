@@ -1,5 +1,8 @@
-name: Test Minikube Runner
-on: workflow_dispatch 
+name: CI-CD Pipeline
+on: 
+  workflow_dispatch:
+  push:
+    branches: [ main ]
 
 jobs:
   check-minikube:
@@ -20,16 +23,12 @@ jobs:
       - name: Heavy Work Simulation
         run: |
           echo "Starting Job ${{ matrix.job_number }} on Minikube"
-          echo "I will sleep for 60 seconds to stay active..."
-          sleep 60
+          sleep 10
           echo "Job ${{ matrix.job_number }} complete!"
-
-
-
 
   build:
     runs-on: arc-runner-set
-    needs: [check-minikube,parallel-test] 
+    needs: [parallel-test] 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -45,4 +44,9 @@ jobs:
         with:
           context: ./bitcoin-app
           push: true
-          tags: rukevweubio/01-devops-dockerswarm:latest
+          # Using github.sha ensures Argo CD sees a change in the manifest
+          tags: |
+            rukevweubio/01-devops-dockerswarm:latest
+            rukevweubio/01-devops-dockerswarm:${{ github.sha }}
+
+ 
