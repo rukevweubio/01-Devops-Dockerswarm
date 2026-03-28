@@ -1,0 +1,23 @@
+  apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bgd-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/gitops-cookbook/gitops-cookbook-sc.git
+    targetRevision: main
+    path: ch07/bgd
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: bgd
+  # Adding SyncPolicy ensures Argo CD keeps the cluster in sync with Git automatically
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
