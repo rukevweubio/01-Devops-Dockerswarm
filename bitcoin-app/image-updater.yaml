@@ -1,0 +1,20 @@
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: my-app-updater
+  namespace: argocd
+spec:
+  application:
+    name: my-test-app
+
+  images:
+    - name: docker.io/rukevweubio/my-app
+
+  updateStrategy: latest
+
+  writeBackMethod:
+    git:
+      secretRef:
+        name: git-creds
+
+  writeBackTarget: kustomization
