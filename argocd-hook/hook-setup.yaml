@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: practice-setup-hook
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/sync-wave: "-5"
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded, BeforeHookCreation
+spec:
+  template:
+    spec:
+      containers:
+      - name: setup
+        image: alpine
+        command: ["echo", "Starting deployment..."]
+      restartPolicy: Never

@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bitcoin-app-1
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bitcoin-app
+  template:
+    metadata:
+      labels:
+        app: bitcoin-app
+    spec:
+      containers:
+      - name: bitcoin
+        image: quay.io/ubiowororuki/bitcoin-app
+        ports:
+        - containerPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bitcoin-app-2
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bitcoin-app
+  template:
+    metadata:
+      labels:
+        app: bitcoin-app
+    spec:
+      containers:
+      - name: bitcoin
+        image: quay.io/ubiowororuki/bitcoin-app
+        ports:
+        - containerPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bitcoin-app-3
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bitcoin-app
+  template:
+    metadata:
+      labels:
+        app: bitcoin-app
+    spec:
+      containers:
+      - name: bitcoin
+        image: quay.io/ubiowororuki/bitcoin-app
+        ports:
+        - containerPort: 8080
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bitcoin-app-4
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bitcoin-app
+  template:
+    metadata:
+      labels:
+        app: bitcoin-app
+    spec:
+      containers:
+      - name: bitcoin
+        image: quay.io/ubiowororuki/bitcoin-app
+        ports:
+        - containerPort: 8080

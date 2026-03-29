@@ -1,0 +1,15 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sync-failure-alert
+  annotations:
+    argocd.argoproj.io/hook: SyncFail
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  template:
+    spec:
+      containers:
+      - name: alert
+        image: alpine
+        command: ["echo", "ALERT: Deployment failed! Checking status..."]
+      restartPolicy: Never
