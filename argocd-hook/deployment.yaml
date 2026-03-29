@@ -60,7 +60,7 @@ spec:
     spec:
       containers:
       - name: bitcoin
-        image: quay.io/ubiowororuki/bitcoin-app
+        image: quay.io/ubiowororuki/bitcoin-app:THIS_WILL_FAIL.
         ports:
         - containerPort: 8080
 
