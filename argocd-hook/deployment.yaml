@@ -5,7 +5,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "0"
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: bitcoin-app
@@ -60,7 +60,7 @@ spec:
     spec:
       containers:
       - name: bitcoin
-        image: quay.io/ubiowororuki/bitcoin-app
+        image: quay.io/ubiowororuki/bitcoin-app argocd
         ports:
         - containerPort: 8080
 
