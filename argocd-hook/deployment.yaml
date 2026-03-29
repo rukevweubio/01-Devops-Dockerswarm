@@ -60,7 +60,7 @@ spec:
     spec:
       containers:
       - name: bitcoin
-        image: quay.io/ubiowororuki/bitcoin-app argocd
+        image: quay.io/ubiowororuki/bitcoin-app
         ports:
         - containerPort: 8080
 
